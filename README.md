@@ -8,7 +8,7 @@ Installation
 
 Clone this repo into `~/.toolsConfig`:
 
-    $ git clone git@github.com:xqliang/toolsConfig.git ~/.toolsConfig
+    $ git clone https://github.com/DaweiZhao007/toolsConfig ~/.toolsConfig
 
 Then install the toolsConfig:
 
