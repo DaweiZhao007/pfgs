@@ -298,7 +298,7 @@ endif
 "Plug 'scrooloose/syntastic'
 
 
-"Plug 'dwzhao/Vim-JDE'
+"Plug 'xqliang/Vim-JDE'
 "set omnifunc=VjdeCompletionFun
 " Make sure console message in english
 "let $LANG='en_US'
@@ -322,7 +322,7 @@ endif
 
 
 " Set 'path' from the Java/VIM-JDE class path
-Plug 'dwzhao/vim-classpath'
+Plug 'xqliang/vim-classpath'
 
 
 " Auto generate tags & scope files, for python, install pycsope==0.3
@@ -405,7 +405,7 @@ let g:airline_section_z='%2p%% %2l:%-2c'
 
 
 " Insert or delete brackets, parens, quotes in pair
-Plug 'dwzhao/Auto-Pairs'
+Plug 'xqliang/Auto-Pairs'
 " Confict when xptemplate restore <CR> mapping, so disable it
 let g:AutoPairsMapCR=0
 
