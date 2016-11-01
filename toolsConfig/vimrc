@@ -1,0 +1,601 @@
+if (has("win32") || has("win64"))
+    let g:isUnix=0
+else
+    let g:isUnix=1
+endif
+
+function! MakeDir (dir)
+    """Make directory if `dir` not exists"""
+    if !isdirectory(a:dir)
+        if exists("*mkdir")
+            call mkdir(a:dir, 'p')
+            echo "Created directory: " . a:dir
+        else
+            echo "Please create directory: " . a:dir
+        endif
+    endif
+endfunction
+
+call MakeDir($HOME . '/.vim/backup')
+call MakeDir($HOME . '/.vim/swap')
+
+set nocompatible
+set binary
+set modelines=5  " System vimrc shipped with OSX sets the modelines variable to 0
+" Prevent vim from trying to connect to the X server, it cause vim startup
+" too slow in tmux. (vim --startuptime log; cat log | sort -k 2 | tail)
+set clipboard=autoselect,exclude:cons\\\|linux\\\|screen\\\|rxvt\\\|cygwin
+set backup writebackup
+set backupdir=$HOME/.vim/backup " Where to put backup file
+set directory=$HOME/.vim/swap   " Where to put swap file
+"set mouse=a
+set noerrorbells novisualbell
+set hlsearch incsearch
+set ignorecase smartcase        " Searches case-sensitive only if they
+                                " contains upper-case letter
+set shortmess+=I                " Hide the launch screen
+set viminfo='20,\"50            " Store command/search/.. history in .viminfo
+set showcmd
+set wildmenu wildignore=*.o,*~,*.pyc
+if g:isUnix
+    set wildignore+=*/.git/*,*/.hg/*,*/.svn/*,*/.DS_Store
+else
+    set wildignore+=.git\*,.hg\*,.svn\*
+endif
+
+
+" Encoding
+set ambiwidth=double
+set encoding=utf-8
+set fileencodings=ucs-bom,utf-8,gbk
+set fileformats=unix,dos,mac
+set termencoding=utf-8
+if (!g:isUnix && has("gui_running"))
+    source $VIMRUNTIME/delmenu.vim
+    source $VIMRUNTIME/menu.vim
+    language messages zh_CN.utf-8
+    source $VIMRUNTIME/vimrc_example.vim
+    source $VIMRUNTIME/mswin.vim
+    behave mswin
+    " Remove guioptions: left,right,bottom scroll bars, menu bar, toolbar
+    set go-=L
+    set go-=l
+    set go-=R
+    set go-=b
+    set go-=m
+    set go-=T
+endif
+
+
+" Editor
+set autoindent
+set cindent              " Make sure '#' input in .py file won't goto column 1
+set backspace=indent,eol,start " Allow backspacing over everything in insert mode
+"set cursorline
+set noexpandtab
+set foldmethod=syntax
+set foldlevel=100        " Do not fold when open file
+set foldcolumn=0         " No fold column
+"set nonumber nolist
+set listchars=tab:»\ ,trail:-,extends:>
+set scrolloff=3          " Keep more context when scrolling off the end of a buffer
+set shiftwidth=4
+set smartindent
+set smarttab
+set tabstop=4
+set textwidth=80
+if v:version >= 703
+    call MakeDir($HOME . '/.vim/undo')
+    set undofile        " Keep a persistent undo file
+    set undodir=$HOME/.vim/undo,/tmp
+    au BufWritePre ~/.vim/undo/* setlocal noundofile
+    au BufWritePre /tmp/* setlocal noundofile
+endif
+" Prevent Vim from clobbering the scrollback buffer. See
+" http://www.shallowsky.com/linux/noaltscreen.html
+" Or put it to .bashrc: export LESS="-X"
+set t_ti= t_te=
+set timeout timeoutlen=800 ttimeoutlen=100
+
+" 解决超长行移动光标困难
+:nmap <UP> gk
+:imap <UP> <ESC>gka
+:nmap <DOWN> gj
+:imap <DOWN> <ESC>gja
+
+" Color
+syntax enable
+filetype plugin on
+
+" Hilight text over length (set colorcolumn=80)
+au BufEnter *.py,*.c,*.cpp,*.h,*.java silent! setlocal colorcolumn=80
+au filetype python,c,cpp,h,java,javascript,css setlocal number
+au filetype vim,python,c,cpp,h,java,rst,ruby,javascript,css setlocal list
+
+" Have Vim jump to the last position when reopening a file
+au BufReadPost * exe "normal! g`\""
+
+
+" Custom key mappings
+let mapleader=","
+nnoremap ; :
+cnoremap jj <C-U><Esc>
+" Quickly get out of insert mode without your fingers having to leave the
+" home row, equals to <ESC>,<C-C>,<C-[>
+inoremap jj <Esc>
+inoremap jw <Esc>:w<CR>a
+" Quickly Esc, save file, close file and reload vimrc
+nnoremap <leader><leader>w :w<CR>
+nnoremap <leader><leader>q :q<CR>
+nnoremap <leader><leader>r :so $MYVIMRC<CR>
+" Pull word under cursor into LHS of a substitute (for search and replace)
+nnoremap <leader>z :%s#\<<C-r>=expand("<cword>")<CR>\>#
+" Clear out a search
+nnoremap <leader><space> :noh<CR>
+" Keep only this window/tabpage open
+nnoremap <leader>ow :only<CR>
+nnoremap <leader>ot :tabonly<CR>
+" Jump to matching pairs easily, with Tab
+nnoremap <Tab> %
+vnoremap <Tab> %
+" Force saving files that require root permission
+cnoremap W<CR> w !sudo tee > /dev/null %<CR>
+
+" Switch window
+nnoremap <C-J> <C-W>j
+nnoremap <C-K> <C-W>k
+nnoremap <C-L> <C-W>l
+nnoremap <C-H> <C-W>h
+nnoremap <C-_> <C-W>_
+
+function! IsMostWin(dir)
+    let old = winnr()
+    if a:dir == "left"
+        silent! exe "normal! \<c-w>h"
+    elseif a:dir == "right"
+        silent! exe "normal! \<c-w>l"
+    elseif a:dir == "top"
+        silent! exe "normal! \<c-w>k"
+    elseif a:dir == "bottom"
+        silent! exe "normal! \<c-w>j"
+    endif
+    let new = winnr()
+    silent! exe old.'wincmd w'
+    return old == new
+endfunction
+
+" Resize window
+nnoremap <silent> <C-W><C-J> :exe ":res ".(IsMostWin('bottom')?'-':'+').5<CR>
+nnoremap <silent> <C-W><C-K> :exe ":res ".(IsMostWin('bottom')?'+':'-').5<CR>
+nnoremap <silent> <C-W><C-L> :exe ":vertical res ".(IsMostWin('right')?'-':'+').5<CR>
+nnoremap <silent> <C-W><C-H> :exe ":vertical res ".(IsMostWin('right')?'+':'-').5<CR>
+
+" Bash like keys for the command line
+cnoremap <C-A> <Home>
+cnoremap <C-E> <End>
+
+" Move cursor together with the screen
+nnoremap <DOWN> gj<C-E>
+nnoremap <UP> gk<C-Y>
+
+
+" Translate
+" INSTALL:
+"   $ sudo apt-get install sdcv
+"   $ mkdir -p ~/.stardict/dic
+"   $ wget http://abloz.com/huzheng/stardict-dic/zh_CN/stardict-langdao-ec-gb-2.4.2.tar.bz2
+"   $ tar -xvjf stardict-langdao-ec-gb-2.4.2.tar.bz2 -C ~/.stardict/dic
+" KEYS:
+"   F Translate word under cursor in normal mode
+function! DictTranslate()
+    let expl=system('sdcv --utf8-output -n ' . expand("<cword>"))
+    windo if expand("%")=="__startdict__" | q! | endif
+    35vsp __startdict__
+    setlocal buftype=nofile bufhidden=hide noswapfile
+    1s/^/\=expl/
+    1
+endfunction
+nnoremap F :call DictTranslate()<CR>
+
+
+" Run
+set makeprg=g++\ -Wall\ -o\ %<.exe\ %
+func! Compile()
+    exec "w"
+    if &filetype == "c"
+        exec "!gcc % -g -o %<.exe"
+    elseif &filetype == "cpp"
+        exec "!g++ % -g -o %<.exe"
+    elseif &filetype == "java"
+        if exists(":Vjdec")
+            exec ":Vjdec"
+        elseif exists(":Javac")
+            exec ":Javac %"
+        else
+            exec "!javac %"
+        endif
+    elseif &filetype == "python"
+        exec "!pycompile %<.py"
+    elseif &filetype == "sh"
+        exec "!bash %"
+    endif
+endfunc
+
+func! Run()
+    if &filetype == "c"
+        exec "!./%<.exe"
+    elseif &filetype == "cpp"
+        exec "!./%<.exe"
+    elseif &filetype == "java"
+        if exists(":Vjder")
+            exec ":Vjder %<"
+        elseif exists(":Java")
+            exec ":Java %<"
+        else
+            exec "!java %<"
+        endif
+    elseif &filetype == "python"
+        exec "!python %<.py"
+    elseif &filetype == "sh"
+        exec "!bash %"
+    endif
+endfunc
+map <F5> :call Compile()<CR>
+map <F6> :call Run()<CR>
+
+" http://vim.wikia.com/wiki/Toggle_auto-indenting_for_code_paste
+nnoremap <F2> :set invpaste paste?<CR>
+set pastetoggle=<F2>
+
+
+" <F7> 切换行号显示
+nnoremap <F7> :set nonu!<CR>:set foldcolumn=0<CR>
+
+
+" Vim-plug
+"
+"   Minimalist Vim Plugin Manager
+"
+" INSTALL:
+"   $ curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
+"       https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+"
+" Brief help
+"   :PlugInstall [name ...]  - Install plugins
+"   :PlugUpdate [name ...]   - Install or update plugins
+"   :PlugClean[!]            - Remove unused directories
+"   :PlugUpgrade             - Upgrade vim-plug itself
+
+
+" Auto setting up Vim-plug
+" see http://www.erikzaadi.com/2012/03/19/auto-installing-vundle-from-your-vimrc/
+let iCanHazPlugMgr=1
+let plugMgrFile=expand('~/.vim/autoload/plug.vim')
+if !filereadable(plugMgrFile)
+    echo "Installing plugin manager..."
+    echo ""
+    execute "!" "curl -fLo ~/.vim/autoload/plug.vim --create-dirs
+        \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim"
+    let iCanHazPlugMgr=0
+endif
+
+call plug#begin('~/.vim/plugged')
+
+" Make sure you use single quotes
+
+" Python syntax check on the fly
+if has("python")
+    Plug 'pyflakes.vim'
+endif
+
+
+" Automatically detect indent (expandtab, shiftwidth, tabstop) settings
+"Plug 'roryokane/detectindent'
+"autocmd BufReadPost * if exists(":DetectIndent") | :DetectIndent | endif
+
+
+" Syntax checking hacks for vim
+"Plug 'scrooloose/syntastic'
+
+
+"Plug 'dwzhao/Vim-JDE'
+"set omnifunc=VjdeCompletionFun
+" Make sure console message in english
+"let $LANG='en_US'
+"language messages en_US.UTF-8
+"let g:vjde_java_exception='\(unreported exception \)\([^ \t;]*\);'
+"if exists($CLASPATH) | let g:vjde_lib_path=$CLASPATH | endif
+" KEYS:
+"   :Vjdec     Do compile
+"   :Vjdei     Goto definition
+"   :Vjdegd    Goto declaration
+"   <leader>ai Add import under cursor
+"   <leader>oe Extend some methods of class
+"   <leader>oi Implements some interface of current class
+"   <leader>fr Fix compiler errors with throws statement.
+"   <leader>ft Fix compiler errors with try-catch statement
+"   <leader>jc Generate constructor of class with all members.
+"   <leader>jt Surround line with try-catch statement
+"   <leader>jd Read the document of symbol that under cursor.
+"   <leader>jg Generate getter-setter of current member.
+"   <leader>je Add import for current line,it used for this line
+
+
+" Set 'path' from the Java/VIM-JDE class path
+Plug 'dwzhao/vim-classpath'
+
+
+" Auto generate tags & scope files, for python, install pycsope==0.3
+"   $ sudo pip install pycscope==0.3
+" KEYS:
+"   <F4> (re)Generate tags&cscope.out
+"   <F3> Add addtional ctags file
+if executable('cscope') && executable('ctags') && executable('md5sum')
+    Plug 'basilgor/vim-autotags'
+    let g:autotags_ctags_opts="--python-kinds=-iv --c++-kinds=+px --fields=+ialS
+            \ --extra=+q"
+    let g:autotags_cscope_file_extensions=".py .cpp .cc .cxx .m .hpp .hh .h .hxx
+            \ .c .idl .java"
+    au BufEnter *.py let g:autotags_no_global=1 | if executable('pycscope.py') |
+            \ let g:autotags_cscope_exe="pycscope.py -i cscope.files -- " | endif
+    au BufLeave *.py let g:autotags_cscope_exe="cscope"
+endif
+
+
+" Cscope key mapping
+" KEYS:
+"   <C-\>{s|g|d|c|t|e|f|i} Find symbol|definition|called by|calling this|
+"                          text string|egrep|file|files #including this file
+Plug 'steffanc/cscopemaps.vim'
+
+
+" Text Objects based on Indentation Level
+" KEYS:
+"   vai, vii, vaI
+"Plug 'vim-indent-object'
+
+
+" Expand/shrink region in V mode
+" KEYS:
+"   + Expand region
+"   - Shrink region
+"Plug 'terryma/vim-expand-region'
+
+
+" Pairs of handy bracket mappings
+" KEYS:
+"   co{c|w|n|l|h|i|p} Toggle cursorline,wrap,number,list,hlsearch,
+"                     ignorcase,paste
+"   ]q                is :cnext
+"   [q                is :cprevious
+"   ]a                is :next
+"   [b                is :bprevious
+Plug 'tpope/vim-unimpaired'
+nnoremap cop :setlocal paste!<cr>
+
+
+" Toggle locationlist, quickfix: <leader>l|q
+Plug 'Valloric/ListToggle'
+nnoremap coq :QToggle<CR>
+nnoremap coL :LToggle<CR>
+
+
+" Status line (replace vim-powerline)
+Plug 'bling/vim-airline'
+set laststatus=2 " Always show the statusline
+set t_Co=256     " Explicitly tell Vim that the terminal supports 256 colors
+let g:airline_left_sep=''
+let g:airline_right_sep=''
+let g:airline_section_z='%2p%% %2l:%-2c'
+
+
+" Show buffers in command line when open/write file
+"
+" KEYS:
+"   {n}<c-^> n'th buffer
+"   <c-^>    Prev buffer
+"   :e#      Next buffer
+"   :ls      List buffers
+"Plug 'buftabs'
+"nnoremap <leader>bt :call Buftabs_show(-1)<CR>
+"nnoremap <leader>bp :bp<CR>
+"nnoremap <leader>bn :bn<CR>
+"let g:buftabs_only_basename=1
+"let g:buftabs_separator=" "
+
+
+" Insert or delete brackets, parens, quotes in pair
+Plug 'dwzhao/Auto-Pairs'
+" Confict when xptemplate restore <CR> mapping, so disable it
+let g:AutoPairsMapCR=0
+
+
+" eXcellent code sniPPet Template engine for vim
+"
+" KEYS:
+"   <C-R><C-R><C-\> List all snippets
+"   xxx<C-\>        Show xxx snippet, use <Tab>/<S-Tab> for navigation
+Plug 'drmingdrmer/xptemplate'
+
+
+" Provides mappings to easily delete, change and add such surroundings in pairs
+" KEYS:
+"  ds  - delete a surrounding, e.g. ds"
+"  cs  - change a surrounding, e.g. cs"', csw), cst<p>
+"  ys  - add a surrounding, e.g. ysiw", ys", ysiwt<a>
+"  yS  - add a surrounding and place the surrounded text on a new line + indent it
+"  yss - add a surrounding to the whole line
+"  ySs/ySS  - add a surrounding to the whole line, place it on a new line + indent it
+Plug 'tpope/vim-surround'
+
+
+" Extended % matching for HTML, LaTeX, and many other languages
+Plug 'tmhedberg/matchit'
+
+
+" Fast and Easy Find and Replace Across Multiple Files
+" KEYS:
+"   <leader>{vv|vV|va|vA|vr|vo} Grep for the word under the cursor, match all
+"                               occurences
+"   :ReplaceUndo                Undoes the last :Replace operation
+"Plug 'EasyGrep'
+"function! ToggleEasyGrepMode()
+"    if g:EasyGrepMode == 2
+"        let g:EasyGrepMode=0
+"        echomsg "'All files' mode on"
+"    else
+"        let g:EasyGrepMode=2
+"        echomsg "'Track extension' mode on"
+"    endif
+"endfunction
+"nnoremap coe :call ToggleEasyGrepMode()<CR>
+"let g:EasyGrepMode=2  " 0 - All files, 1 - Bufrers, 2 - Track extension
+
+
+" Fuzzy file, buffer, mru, tag, etc finder
+" KEYS:
+"   <C-P>
+Plug 'kien/ctrlp.vim'
+let g:ctrlp_cmd='CtrlPMixed'
+let g:ctrlp_custom_ignore='\v[\/]\.(git|hg|svn)$'
+
+
+" Easy commenting of code for many filetypes
+" KEYS:
+"   [count]<leader>cc       Comment out the current line or text selected
+"   [count]<leader>c<space> Toggles the comment state of the selected line(s)
+"   [count]<leader>cu       Uncomments the selected line(s)
+"   [count]<leader>cA       Adds comment delimiters to the end of line and goes
+"                           into insert mode between them. 
+Plug 'scrooloose/nerdcommenter'
+
+
+" Simplify Doxygen documentation in C, C++, Python
+"Plug 'DoxygenToolkit.vim'
+"nnoremap <leader>do :Dox<CR>
+"nnoremap <leader>da :DoxAuthor<CR>
+"nnoremap <leader>db :DoxBlock<CR>
+
+
+" A tree explorer plugin for navigating the filesystem
+Plug 'scrooloose/nerdtree'
+nnoremap <F9> :NERDTreeToggle<CR>
+let NERDTreeIgnore = ['\.pyc$', '\.pyo$', '\.class$', '\.o$']
+" Open a NERDTree automatically when vim starts up if no files were specified
+"autocmd vimenter * if !argc() && exists(":NERDTree") | NERDTree | endif
+" Close vim if the only window left open is a NERDTree
+autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTreeType") && b:NERDTreeType == "primary") | q! | endif
+
+
+" Displays tags in a window, ordered by class etc (replace taglist.vim)
+"Plug 'Tagbar'
+"nnoremap <leader>tb :TagbarToggle<CR>
+"let g:tagbar_width=30
+"au filetype python,java,c,cpp silent! nested :TagbarOpen
+
+
+Plug 'taglist.vim'
+nnoremap <F10> :TlistToggle<CR>
+let Tlist_Use_Right_Window=1
+
+
+" Molokai color scheme
+Plug 'molokai'
+silent! colorscheme desert
+silent! colorscheme molokai
+
+
+" Awesome Python autocompletion with VIM
+"
+" INSTALL:
+"   $ sudo pip install jedi
+"
+" KEYS:
+"   <leader>g Goto assignments (typical goto function)
+"   <leader>d Goto definitions (follow identifier as far as possible, includes imports and statements)
+"   <leader>r Renaming
+"   <leader>n Shows all the usages of a name
+"   <C-n>     Completion
+"   K         Show Documentation/Pydoc (shows a popup with assignments)
+Plug 'davidhalter/jedi-vim'
+let g:jedi#completions_command = "<C-n>"
+let g:jedi#completions_enabled = 1
+let g:jedi#show_call_signatures = "1"
+
+
+if v:version >= 704 || (v:version == 703 && has("patch584"))
+    " A code-completion engine (repalce SuperTab & neocomplcache)
+    "
+    " INSTALL:
+    "   see https://github.com/Valloric/YouCompleteMe
+    "
+    " NOTE:
+    "   cd ~/.vim/plugged/YouCompleteMe && ./install.py --clang-completer
+    "
+    " KEYS:
+    "   <leader>g   Goto definition or declaration
+    "   <C-O>/<C-I> Jump back or forward
+    "Plug 'Valloric/YouCompleteMe', { 'do': './install.py --clang-completer' }
+    "set g:ycm_global_ycm_extra_conf='~/.vim/bundle/YouCompleteMe/cpp/ycm/.ycm_extra_conf.py'
+    "let g:ycm_complete_in_comments=1
+    "let g:ycm_collect_identifiers_from_comments_and_strings=1
+    "let g:ycm_collect_identifiers_from_tags_files=1
+    "noremap <leader>jc :YcmCompleter GoToDeclaration<CR>
+    "noremap <leader>jd :YcmCompleter GoToDefinition<CR>
+    "noremap <leader>jr :YcmCompleter GoToReferences<CR>
+else
+    " Perform all your vim insert mode completions with Tab
+    Plug 'ervandew/supertab'
+    let g:SuperTabDefaultCompletionType=""
+
+
+    " Ultimate auto-completion system
+    Plug 'Shougo/neocomplcache.vim'
+    let g:neocomplcache_enable_at_startup=1
+    let g:neocomplcache_disable_auto_complete=1
+
+
+    " Show function prototype in command line when type '('
+    "Plug 'echofunc.vim'
+
+
+    " Smart Space key for Vim
+    " KEYS:
+    "   <SPACE>        A clever key to repeat motions
+    "   <S-SPACE>/<BS> Inverse <SPACE>
+    "Plug 'spiiph/vim-space'
+endif
+
+
+" Zoom in/out of windows
+" KEYS:
+"   <C-W>o Toggle window size
+Plug 'regedarek/ZoomWin'
+
+
+if has("conceal")
+    " Display the indention levels with thin vertical lines
+    "Plug 'Yggdroot/indentLine'
+    "nnoremap <leader>il :IndentLinesToggle<CR>
+    " NOTE: too slow when file lines > 2K
+    "let g:indentLine_fileType=['python', 'java', 'h', 'c', 'cpp']
+    "let g:indentLine_enabled=0
+endif
+
+
+" Other maybe useful plugins
+"Plug 'Mark'
+"Plug 'python_match.vim'
+"Plug 'TxtBrowser'
+"Plug 'YankRing.vim'
+
+" Add plugins to &runtimepath
+call plug#end()
+
+if iCanHazPlugMgr == 0
+    echo "Installing plugins, please ignore key map error messages"
+    echo ""
+    :PlugInstall
+endif
+
+" vim: et tw=4 sw=4

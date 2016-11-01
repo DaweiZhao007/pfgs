@@ -1,0 +1,6 @@
+[alias]
+	last = log -1 HEAD
+	unstage = reset HEAD --
+[user]
+	name = dwzhao
+	email = flybx@foxmail.com
