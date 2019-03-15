@@ -108,7 +108,8 @@ fi
 
 export PYTHONSTARTUP=~/.pythonstartup
 # see http://www.shallowsky.com/linux/noaltscreen.html
-export LESS='-X'
+#     http://excid3.com/blog/how-to-fix-esc-in-your-terminal
+export LESS='-rX'
 export GREP_OPTIONS='--exclude-dir=.svn --exclude-dir=.git --color=auto -nrI'
 
 # alias
@@ -116,7 +117,7 @@ alias -- svndi='svn di $@|view --noplugin -'
 
 # see http://superuser.com/questions/249293/rename-tmux-window-name-to-prompt-command-ps1-or-remote-ssh-hostname
 ssh() {
-	if [ -z "`readlink -f $SSH_AUTH_SOCK`"  ]; then
+	if [ -z "`readlink -f \"$SSH_AUTH_SOCK\"`" ]; then
 		# Fix "Permission denied (publickey)." problem.
 		sock="`find /tmp -user $USER -path '/tmp/ssh-*/*' 2>/dev/null|head -1`"
 		if [ ! -z "$sock"  ]; then
@@ -151,10 +152,13 @@ if which tmux 2>&1 >/dev/null; then
     alias tmux='tmux -2'
     tm () {
         if [ -z "$TMUX" ]; then
+            # https://stackoverflow.com/a/41422154
+            # failed to connect to server: Connection refused
+            pkill -u $(whoami) -USR1 tmux
             if [ -n "$(tmux ls)" ]; then
-                tmux attach "$@"
+                tmux -2 attach "$@"
             else
-                tmux new "$@"
+                tmux -2 new "$@"
             fi
         fi
     }

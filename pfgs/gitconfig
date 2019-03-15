@@ -1,5 +1,15 @@
 [alias]
+	au = !git add -u && git status
+	br = branch
+	ci = commit
+	co = checkout
+	di = diff
+	dc = diff --cached
+	st = status
 	last = log -1 HEAD
+	log1 = log --pretty=format:'%s'
+	logv = log --oneline
+	logp = log -p
 	unstage = reset HEAD --
 [user]
 	name = dwzhao

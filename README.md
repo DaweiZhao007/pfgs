@@ -3,6 +3,15 @@ pfgs
 
 A bunch of configuration files for editors and other UNIX tools.
 
+include:
+bashrc
+gitconfig
+profile
+pythonstartup
+tmux.conf
+vimrc
+
+
 Installation
 ------------
 
@@ -21,8 +30,3 @@ Then install the pfgs:
 It will backup existing files as `<file>.pfgs.bak`.
 
 The toolsConfig will be symlinked, e.g. `~/.bashrc` symlinked to `~/.pfgs/pfgs/bashrc`.
-
-etc: U maybe should install jedi-vim manually!
-On Arch Linux, you can also install jedi-vim from official repositories as
-vim-jedi. It is also available on Debian (≥8) and Ubuntu (≥14.04) as
-vim-python-jedi. On Fedora Linux, it is available as vim-jedi.

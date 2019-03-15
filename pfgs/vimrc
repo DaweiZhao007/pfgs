@@ -83,7 +83,7 @@ set shiftwidth=4
 set smartindent
 set smarttab
 set tabstop=4
-set textwidth=80
+set textwidth=100
 if v:version >= 703
     call MakeDir($HOME . '/.vim/undo')
     set undofile        " Keep a persistent undo file
@@ -108,9 +108,10 @@ syntax enable
 filetype plugin on
 
 " Hilight text over length (set colorcolumn=80)
-au BufEnter *.py,*.c,*.cpp,*.h,*.java silent! setlocal colorcolumn=80
+au BufEnter *.py,*.c,*.cpp,*.h,*.java silent! setlocal colorcolumn=+1
+au BufEnter *.py,*.c,*.cpp,*.h,*.java silent! hi ColorColumn ctermbg=brown guibg=brown
 au filetype python,c,cpp,h,java,javascript,css setlocal number
-au filetype vim,python,c,cpp,h,java,rst,ruby,javascript,css setlocal list
+au filetype vim,python,c,cpp,h,java,rst,ruby,javascript,css,ini,conf,json,xml,yaml,sql setlocal list
 
 " Have Vim jump to the last position when reopening a file
 au BufReadPost * exe "normal! g`\""
@@ -122,8 +123,8 @@ nnoremap ; :
 cnoremap jj <C-U><Esc>
 " Quickly get out of insert mode without your fingers having to leave the
 " home row, equals to <ESC>,<C-C>,<C-[>
-inoremap jj <Esc>
-inoremap jw <Esc>:w<CR>a
+"inoremap jj <Esc>
+"inoremap jw <Esc>:w<CR>a
 " Quickly Esc, save file, close file and reload vimrc
 nnoremap <leader><leader>w :w<CR>
 nnoremap <leader><leader>q :q<CR>
@@ -252,6 +253,10 @@ set pastetoggle=<F2>
 nnoremap <F7> :set nonu!<CR>:set foldcolumn=0<CR>
 
 
+nnoremap <leader>\ :vsp 
+nnoremap <leader>- :sp 
+
+
 " Vim-plug
 "
 "   Minimalist Vim Plugin Manager
@@ -283,9 +288,37 @@ call plug#begin('~/.vim/plugged')
 
 " Make sure you use single quotes
 
+" A Git wrapper
+Plug 'tpope/vim-fugitive'
+nnoremap <leader>gi :Git 
+" git add %
+nnoremap <leader>ga :Gwrite<CR>
+nnoremap <leader>gb :Gblame<CR>
+nnoremap <leader>gc :Gcommit<CR>
+nnoremap <leader>gd :Gdiff<CR>
+nnoremap <leader>gs :Gdiff --cached<CR>
+" git checkout %
+nnoremap <leader>go :Gread<CR>
+" Rename the current file and the corresponding Vim buffer
+nnoremap <leader>gm :Gmove<CR>
+" Delete the current file and the corresponding Vim buffer
+nnoremap <leader>gr :Gremove<CR>
+
+
+" EditorConfig helps maintain consistent coding styles for multiple developers
+" working on the same project across various editors and IDEs.
+"
+" INSTALL:
+"   $ sudo apt-get install editorconfig
+if has("python") && executable('editorconfig')
+    Plug 'editorconfig/editorconfig-vim'
+    let g:EditorConfig_exclude_patterns = ['fugitive://.*', 'scp://.*']
+endif
+
+
 " Python syntax check on the fly
 if has("python")
-    Plug 'pyflakes.vim'
+    Plug 'kevinw/pyflakes-vim'
 endif
 
 
@@ -333,7 +366,8 @@ Plug 'xqliang/vim-classpath'
 if executable('cscope') && executable('ctags') && executable('md5sum')
     Plug 'basilgor/vim-autotags'
     let g:autotags_ctags_opts="--python-kinds=-iv --c++-kinds=+px --fields=+ialS
-            \ --extra=+q"
+            \ --extra=+q --exclude=*.html --exclude=*.js --exclude=*.css
+            \ --exclude=*.log"
     let g:autotags_cscope_file_extensions=".py .cpp .cc .cxx .m .hpp .hh .h .hxx
             \ .c .idl .java"
     au BufEnter *.py let g:autotags_no_global=1 | if executable('pycscope.py') |
@@ -381,7 +415,8 @@ nnoremap coL :LToggle<CR>
 
 
 " Status line (replace vim-powerline)
-Plug 'bling/vim-airline'
+Plug 'vim-airline/vim-airline'
+Plug 'vim-airline/vim-airline-themes'
 set laststatus=2 " Always show the statusline
 set t_Co=256     " Explicitly tell Vim that the terminal supports 256 colors
 let g:airline_left_sep=''
@@ -398,8 +433,8 @@ let g:airline_section_z='%2p%% %2l:%-2c'
 "   :ls      List buffers
 "Plug 'buftabs'
 "nnoremap <leader>bt :call Buftabs_show(-1)<CR>
-"nnoremap <leader>bp :bp<CR>
-"nnoremap <leader>bn :bn<CR>
+nnoremap <leader>bp :bp<CR>
+nnoremap <leader>bn :bn<CR>
 "let g:buftabs_only_basename=1
 "let g:buftabs_separator=" "
 
@@ -481,6 +516,8 @@ Plug 'scrooloose/nerdcommenter'
 Plug 'scrooloose/nerdtree'
 nnoremap <F9> :NERDTreeToggle<CR>
 let NERDTreeIgnore = ['\.pyc$', '\.pyo$', '\.class$', '\.o$']
+" http://superuser.com/questions/195022/vim-how-to-synchronize-nerdtree-with-current-opened-tab-file-path
+map <leader>f :NERDTreeFind<CR>
 " Open a NERDTree automatically when vim starts up if no files were specified
 "autocmd vimenter * if !argc() && exists(":NERDTree") | NERDTree | endif
 " Close vim if the only window left open is a NERDTree
@@ -494,13 +531,13 @@ autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTreeType") && b:NERDTree
 "au filetype python,java,c,cpp silent! nested :TagbarOpen
 
 
-Plug 'taglist.vim'
+Plug 'vim-scripts/taglist.vim'
 nnoremap <F10> :TlistToggle<CR>
 let Tlist_Use_Right_Window=1
 
 
 " Molokai color scheme
-Plug 'molokai'
+Plug 'tomasr/molokai'
 silent! colorscheme desert
 silent! colorscheme molokai
 
@@ -508,6 +545,7 @@ silent! colorscheme molokai
 " Awesome Python autocompletion with VIM
 "
 " INSTALL:
+"   $ sudo apt-get install vim-nox  # VIM with Python support
 "   $ sudo pip install jedi
 "
 " KEYS:
@@ -517,11 +555,33 @@ silent! colorscheme molokai
 "   <leader>n Shows all the usages of a name
 "   <C-n>     Completion
 "   K         Show Documentation/Pydoc (shows a popup with assignments)
-Plug 'davidhalter/jedi-vim'
-let g:jedi#completions_command = "<C-n>"
-let g:jedi#completions_enabled = 1
-let g:jedi#show_call_signatures = "1"
+if has("python")
+    Plug 'davidhalter/jedi-vim'
+    let g:jedi#completions_command = "<C-n>"
+    let g:jedi#completions_enabled = 1
+    let g:jedi#show_call_signatures = "1"
+    " Disable docstring window to popup during completion
+    autocmd FileType python setlocal completeopt-=preview
+endif
 
+
+" Python code folding for Vim
+"
+" KEYS:
+"   za and <space> Toggle fold
+"   zc Close the fold at the cursor
+"   zo Open the fold at the cursor
+"   zR Open all folds
+"   zM Close all folds
+"   zj and zk Jump from one fold to another
+Plug 'tmhedberg/SimpylFold'
+let g:SimpylFold_docstring_preview = 1
+nnoremap <space> za
+vnoremap <space> zf
+"autocmd BufWinEnter *.py setlocal foldexpr=SimpylFold(v:lnum) foldmethod=expr
+"autocmd BufWinLeave *.py setlocal foldexpr< foldmethod<
+
+Plug 'jmcantrell/vim-virtualenv'
 
 if v:version >= 704 || (v:version == 703 && has("patch584"))
     " A code-completion engine (repalce SuperTab & neocomplcache)
