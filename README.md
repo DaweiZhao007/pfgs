@@ -3,13 +3,14 @@ pfgs
 
 A bunch of configuration files for editors and other UNIX tools.
 
-include:
-bashrc
-gitconfig
-profile
-pythonstartup
-tmux.conf
-vimrc
+include files:
+
+- bashrc
+- gitconfig
+- profile
+- pythonstartup
+- tmux.conf
+- vimrc
 
 
 Installation
